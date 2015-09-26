@@ -21,7 +21,7 @@ void diff_c (
     unsigned char (*src_1_matrix)[src_1_row_size] = (unsigned char (*)[src_1_row_size]) src_1;
     unsigned char (*src_2_matrix)[src_2_row_size] = (unsigned char (*)[src_2_row_size]) src_2;
     unsigned char (*dst_matrix)[dst_row_size] = (unsigned char (*)[dst_row_size]) dst;
-    unsigned char max_1, max_2;
+    unsigned char r, g, b, max;
     int i, j;
 
     i = 0;
@@ -34,14 +34,18 @@ void diff_c (
             bgra_t *src_1_pixel = (bgra_t*)&src_1_matrix[i][j*4];
             bgra_t *src_2_pixel = (bgra_t*)&src_2_matrix[i][j*4];
 
-            // Obtenemos el máximo valor entre los canales de cada pixel
-            max_1 = norma_inf( src_1_pixel );
-            max_2 = norma_inf( src_2_pixel );
-
             // Calculamos la diferencia
-            dst_pixel->r = abs(max_1 - max_2);
-            dst_pixel->g = abs(max_1 - max_2);
-            dst_pixel->b = abs(max_1 - max_2);
+            r = abs(src_1_pixel->r - src_2_pixel->r);
+            g = abs(src_1_pixel->g - src_2_pixel->g);
+            b = abs(src_1_pixel->b - src_2_pixel->b);
+
+            // Obtenemos el máximo valor entre las 3 diferencias
+            max = ( r >= g ) ? ( ( r >= b ) ?  r : b ) : ( ( g >= b ) ? g : b );
+
+            // Actualizamos la imagen destino
+            dst_pixel->r = max;
+            dst_pixel->g = max;
+            dst_pixel->b = max;
             dst_pixel->a = 255;
             j++;
         }
