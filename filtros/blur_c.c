@@ -9,7 +9,6 @@ float *getKernel( int radius, float sigma){
 
 	int n    = 2*radius+1;
 	float *k = (float *) malloc( n * n * sizeof(float ) ) ;
-	int tam  = (2*radius+1) * (2*radius+1) * sizeof(float ) ;
     
     i = 0;
     while( i<= (2*radius ) ){

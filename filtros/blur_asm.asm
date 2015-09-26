@@ -9,10 +9,8 @@ extern getKernel
 
 section .data
 
-;cast_pixel1: db 0x80, 0x80, 0x80, 0x80, 0x01, 0x80, 0x80, 0x80, 0x02, 0x80, 0x80, 0x80, 0x03, 0x80, 0x80, 0x80
-cast_pixel1: db 0x00, 0x80, 0x80, 0x80, 0x01, 0x80, 0x80, 0x80, 0x02, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80
-;cast_pixel2: db 0x80, 0x04, 0x08, 0x0c, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80
-cast_pixel2: db 0x00, 0x04, 0x08, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80
+cast_to_float: db 0x00, 0x80, 0x80, 0x80, 0x01, 0x80, 0x80, 0x80, 0x02, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80
+cast_to_int8: db 0x00, 0x04, 0x08, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80
 section .text
 ;void blur_asm (
 ;               unsigned char *src,
@@ -99,8 +97,8 @@ blur_asm:
     sub rcx, rbx
     sub rcx, rbx
 
-    movdqu xmm14, [cast_pixel1]
-    movdqu xmm15, [cast_pixel2]
+    movdqu xmm14, [cast_to_float]
+    movdqu xmm15, [cast_to_int8]
 
     .recorrerFilas:
 
@@ -141,9 +139,9 @@ blur_asm:
 
                     movd     xmm2, [r10]
                     pshufb   xmm2, xmm14
-                    cvtdq2ps xmm2, xmm2     ; XMM2 = (float) PIXEL[i][j]
+                    cvtdq2ps xmm2, xmm2     ; XMM2 = (float) PIXEL[i][j] = | A | R | G | B |
 
-                    movd     xmm3, [r11]    ; XMM3 = | 0 | 0 | 0 | K[i][j] |
+                    movd     xmm3, [r11]    ; XMM3 = |    0    |    0    |    0    | K[i][j] |
                     pshufd   xmm3, xmm3, 0  ; XMM3 = | K[i][j] | K[i][j] | K[i][j] | K[i][j] |
 
                     mulps    xmm2, xmm3     ; XMM2 = PIXEL[i][j]*K[i][j]
@@ -171,10 +169,12 @@ blur_asm:
 
             cvtps2dq  xmm1, xmm1
             pshufb    xmm1, xmm15
-            ;movd      xmm2, [r13]
-            ;pslldq    xmm2, 15
-			;psrldq    xmm2, 15
-            ;por       xmm1, xmm2
+
+            movd      xmm2, [r13]
+            psrldq    xmm2, 3
+			pslldq    xmm2, 3
+            por       xmm1, xmm2
+
             movd     [r13], xmm1
 
             pop rdi
