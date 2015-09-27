@@ -3,11 +3,6 @@
 #include <math.h>
 #include "../tp2.h"
 
-unsigned char norma_inf( bgra_t *pixel ){
-    return ( pixel->r >= pixel->g ) ? ( ( pixel->r >= pixel->b ) ? pixel->r : pixel->b ) :
-                                      ( ( pixel->g >= pixel->b ) ? pixel->g : pixel->b );
-}
-
 void diff_c (
 	unsigned char *src_1,
 	unsigned char *src_2,

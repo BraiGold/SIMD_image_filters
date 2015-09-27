@@ -56,43 +56,35 @@ diff_asm:
         movdqu xmm1, [rdi]      ; XMM1 = | ... | a1 | r1 | g1 | b1 |
         movdqu xmm2, [rsi]      ; XMM2 = | ... | a2 | r2 | g2 | b2 |
 
-        ; Obtengo el máximo valor entre los canales de cada pixel
-        movdqu xmm3, xmm1
-        movdqu xmm4, xmm1
+        ; Calculamos la diferencia
+        movdqu xmm0, xmm1       ; XMM0 = | ... | a1 | r1 | g1 | b1 |
+        pshufb xmm1, xmm13      ; XMM1 = | ... |  0 | r1 | g1 | b1 |
+        pshufb xmm2, xmm13      ; XMM2 = | ... |  0 | r2 | g2 | b2 |
 
-        pshufb xmm3, xmm14      ; XMM3 = | ... |  0 | g1 | b1 | r1 |
-        pshufb xmm4, xmm15      ; XMM4 = | ... |  0 | b1 | r1 | g1 |
+                                ; Sea mx = max(x1,x2), con x = {r,g,b}
+        pmaxub xmm0, xmm2       ; XMM0 = | ... | a1 | mr | mg | mb |
 
-        pmaxub xmm1, xmm3
-        pmaxub xmm1, xmm4       ; XMM1 = | ... | a1 | m1 | m1 | m1 |
+                                ; Sea dx = abs(x1-x2), con x = {r,g,b}. Entonces, por ejemplo:
+        movdqu  xmm3, xmm0      ; XMM3 = | ... | a1 | mr | mg | mb |
+        psubusb xmm0, xmm1      ; XMM0 = | ... | a1 | dr |  0 |  0 |
+        psubusb xmm3, xmm2      ; XMM3 = | ... | a1 |  0 | dg | db |    
 
-        movdqu xmm3, xmm2
-        movdqu xmm4, xmm2
+        por xmm0, xmm3          ; XMM0 = | ... | a1 | dr | dg | db |
 
-        pshufb xmm3, xmm14      ; XMM3 = | ... |  0 | g2 | b2 | r2 |
-        pshufb xmm4, xmm15      ; XMM4 = | ... |  0 | b2 | r2 | g2 |
+        ; Obtengo la norma infinito
+        movdqu xmm3, xmm0       ; XMM3 = | ... | a1 | dr | dg | db |
+        movdqu xmm4, xmm0       ; XMM4 = | ... | a1 | dr | dg | db |
 
-        pmaxub xmm2, xmm3
-        pmaxub xmm2, xmm4       ; XMM2 = | ... | a2 | m2 | m2 | m2 |
+        pshufb xmm3, xmm14      ; XMM3 = | ... |  0 | dg | db | dr |
+        pshufb xmm4, xmm15      ; XMM4 = | ... |  0 | db | dr | dg |
 
-        pshufb xmm2, xmm13      ; XMM2 = | ... |  0 | m2 | m2 | m2 |
+        pmaxub xmm0, xmm3       
+        pmaxub xmm0, xmm4       ; XMM0 = | ... | a1 |  m |  m |  m |
 
         ; Calculo la diferencia
 
-        movdqu xmm3, xmm1       ; XMM3 = | ... | a1 | m1 | m1 | m1 |
-        pmaxub xmm3, xmm2       ; XMM3 = | ... | a1 |  M |  M |  M |
-
-        movdqu xmm4, xmm3       ; XMM4 = | ... | a1 |  M |  M |  M |
-        pshufb xmm4, xmm13      ; XMM4 = | ... |  0 |  M |  M |  M |
-
-                                ; Por ejemplo, si m1 era el máximo
-        psubusb xmm3, xmm1      ; XMM3 = | ... | a1 |  0 |  0 |  0 |
-        psubusb xmm4, xmm2      ; XMM4 = | ... |  0 |  D |  D |  D |
-
-        por xmm3, xmm4          ; XMM3 = | ... | a1 |  D |  D |  D |
-
         ; Guardo la diferencia en la imagen destino
-        movdqu [rdx], xmm3
+        movdqu [rdx], xmm0
 
         ; Avanzo a los siguientes 4 píxeles
         lea rdx, [rdx+TAM_PIXEL_X4]
