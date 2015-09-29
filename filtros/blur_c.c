@@ -82,6 +82,7 @@ void blur_c (
 			dst_pixel->r = (unsigned char) promedio_r;
 			dst_pixel->g = (unsigned char) promedio_g;
 			dst_pixel->b = (unsigned char) promedio_b;
+            dst_pixel->a = 255;
 			j ++;
 		}
 
